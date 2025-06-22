@@ -1,226 +1,313 @@
-import { facility } from "@/app/data/facility";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   getEmail,
-  getPhoneNumber,
-  getUserID,
   getfullname,
   isAuthenticated,
-} from "@/app/sign-in/auth";
-import React, { useState, useEffect } from "react";
+  getUser,
+} from "../../sign-in/auth";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 interface Brand {
-  category: string;
-  items: string[];
+  brand: string;
+  models: string[];
 }
 
-interface Facility {
-  name: string;
-  capacity: string;
-  lon: number;
+interface Location {
   lat: number;
-  contact: string;
-  time: string;
-  verified: boolean;
+  lng: number;
+  address: string;
 }
 
 interface BookingData {
   userId: string;
   userEmail: string;
   recycleItem: string;
-  recycleItemPrice: number;
+  recycleItemPrice?: number;
   pickupDate: string;
   pickupTime: string;
-  facility: string; // Facility ID
   fullName: string;
+  category?: string;
   address: string;
   phone: number;
+  location?: Location;
+  deviceCondition?: string;
+  accessories?: string[];
+  deviceImageUrl?: string;
+  preferredContactNumber?: string;
+  alternateContactNumber?: string;
+  specialInstructions?: string;
+  declarationChecked?: boolean;
+  status?: string;
+  receiverEmail?: string;
+  receiverPhone?: string;
+  receiverName?: string;
+  model?: string;
 }
 
 const Accessories: React.FC = () => {
   const [selectedBrand, setSelectedBrand] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [selectedFacility, setSelectedFacility] = useState("");
-  const [recycleItemPrice, setRecycleItemPrice] = useState<number>();
-  const [pickupDate, setPickupDate] = useState<string>("");
-  const [pickupTime, setPickupTime] = useState<string>("");
+  const [modelInput, setModelInput] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [address, setAddress] = useState("");
-  const [models, setModels] = useState<string[]>([]);
+  const [location, setLocation] = useState<Location | undefined>(undefined);
   const [bookingData, setBookingData] = useState<BookingData[]>([]);
-  const [facilityData, setFacilityData] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-  useEffect(() => {
-    fetch("https://elocate-server.onrender.com/api/v1/facility")
-      .then((response) => response.json())
-      .then((data) => {
-        setFacilityData(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching facilities:", error);
-      });
-  }, []);
+  const [deviceCondition, setDeviceCondition] = useState("");
+  const [accessories, setAccessories] = useState<string[]>([]);
+  const [deviceImage, setDeviceImage] = useState<File | null>(null);
+  const [preferredContactNumber, setPreferredContactNumber] = useState("");
+  const [alternateContactNumber, setAlternateContactNumber] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [declarationChecked, setDeclarationChecked] = useState(false);
+
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          const addressString = "Lat: " + latitude.toFixed(5) + ", Lon: " + longitude.toFixed(5);
+          setAddress(addressString);
+          setIsGettingLocation(false);
+        },
+        function (error) {
+          console.error("Error getting location:", error);
+          toast.error("Could not get your location", { autoClose: 3000 });
+          setIsGettingLocation(false);
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser", { autoClose: 3000 });
+      setIsGettingLocation(false);
+    }
+  };
 
   const handleBrandChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const brand = event.target.value;
     setSelectedBrand(brand);
-    setSelectedModel("");
-    setSelectedFacility("");
-  
-    if (brand) {
-      const selectedBrand = brands.find((b) => b.category === brand);
-      if (selectedBrand) {
-        setModels(selectedBrand.items);
-      }
+  };
+
+  const handleAccessoryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = event.target;
+    if (checked) {
+      setAccessories((prev) => [...prev, value]);
+    } else {
+      setAccessories((prev) => prev.filter((acc) => acc !== value));
     }
   };
 
   useEffect(() => {
     const fetchBrandsAndModels = () => {
-      const accessoriesData = [
+      const brandsData: Brand[] = [
         {
-          category: "Headphones",
-          items: ["Sony WH-1000XM4", "Bose QuietComfort 35 II", "AirPods Pro", "Sennheiser HD 660 S", "JBL Free X"],
+          brand: "Sony",
+          models: ["WH-1000XM4", "QuietComfort 35 II", "AirPods Pro", "HD 660 S", "JBL Free X"],
         },
         {
-          category: "Chargers",
-          items: ["Anker PowerPort", "Belkin Boost Charge", "Apple 20W USB-C Power Adapter", "Samsung Super Fast Charger", "RAVPower 60W 6-Port USB Charger"],
+          brand: "Anker",
+          models: ["PowerPort", "PowerCore 26800mAh", "PowerCore 10000mAh"],
         },
         {
-          category: "Laptop Bags",
-          items: ["SwissGear Travel Gear 1900 Scansmart TSA Laptop Backpack", "AmazonBasics Laptop Backpack", "Targus Drifter II Backpack", "KROSER Laptop Backpack", "Matein Travel Laptop Backpack"],
+          brand: "Apple",
+          models: ["20W USB-C Power Adapter", "Magic Keyboard", "AirPods"],
         },
         {
-          category: "External Hard Drives",
-          items: ["WD Black 5TB P10 Game Drive", "Seagate Backup Plus Slim 2TB", "Samsung T5 Portable SSD", "LaCie Rugged Mini 4TB", "Toshiba Canvio Basics 1TB"],
+          brand: "Logitech",
+          models: ["MX Master 3", "Wireless Keyboard", "Wireless Mouse"],
         },
         {
-          category: "Smartwatches",
-          items: ["Apple Watch Series 7", "Samsung Galaxy Watch 4", "Fitbit Charge 5", "Garmin Venu 2", "Amazfit GTR 3"],
+          brand: "Samsung",
+          models: ["Super Fast Charger", "Wireless Charger Portable Battery"],
         },
         {
-          category: "Mouse and Keyboards",
-          items: ["Logitech MX Master 3", "Razer DeathAdder Elite", "Apple Magic Keyboard", "Corsair K95 RGB Platinum XT", "HP Wireless Elite Keyboard"],
-        },
-        {
-          category: "Power Banks",
-          items: ["Anker PowerCore 26800mAh", "RAVPower Portable Charger 20000mAh", "Xiaomi Mi Power Bank 3", "AUKEY Portable Charger 10000mAh", "Samsung Wireless Charger Portable Battery 10,000mAh"],
+          brand: "Other",
+          models: ["Super Fast Charger", "Wireless Charger Portable Battery"],
         },
       ];
-      
 
-      setBrands(accessoriesData);
-      setModels(models);
+      setBrands(brandsData);
     };
     fetchBrandsAndModels();
-  }, [models]);
+  }, []);
 
   const email = getEmail();
-  const userId = getUserID();
-  const phone = getPhoneNumber();
-  const fullname = getfullname();
+  const fullname = getfullname() || getUser()?.fullname || "";
+  const user = getUser();
+  const userId = user ? user.id : "";
+  const userRole = user ? user.role : "user";
 
- const handleSubmit = async () => {
-  const recycleItem = selectedBrand + selectedModel;
+  const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
 
-  if (isAuthenticated() && facilityData.length > 0) {
-    if (
-      recycleItem &&
-      selectedFacility &&
-      recycleItemPrice &&
-      pickupDate &&
-      pickupTime &&
-      fullname &&
-      phone &&
-      address &&
-      fullname &&
-      email &&
-      userId
-    ) {
+  const router = useRouter();
 
-      const newBooking: BookingData = {
-        userId: userId,
-        userEmail: email,
-        recycleItem,
-        recycleItemPrice,
-        pickupDate,
-        pickupTime,
-        facility: selectedFacility,
-        fullName: fullname,
-        address: address,
-        phone: phone as unknown as number,
-      };
-
-      setBookingData([...bookingData, newBooking]);
-      setIsLoading(true)
-
-      try {
-        const response = await fetch("https://elocate-server.onrender.com/api/v1/booking", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newBooking),
-        });
-
-        if (response.ok) {
-          toast.success("Submitted successfully!", {
-            autoClose: 3000,
-          });
-          setSelectedBrand("");
-          setSelectedModel("");
-          setSelectedFacility("");
-          setRecycleItemPrice(0);
-          setPickupDate("");
-          setPickupTime("");
-          setAddress("");
-          setIsLoading(false)
-
-        } else {
-          toast.error("Error submitting data.", {
-            autoClose: 3000,
-          });
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("Error submitting data.", {
-          autoClose: 3000,
-        });
+  useEffect(() => {
+    const checkAuth = () => {
+      const authStatus = isAuthenticated();
+      setIsLoggedIn(authStatus);
+      if (!authStatus) {
+        router.push("/sign-in?message=signin to recycle");
+        toast.error("Please login to book a facility", { autoClose: 3000 });
       }
-      finally {
-        setIsLoading(false);
-    }
-    } else {
-      toast.error("Please fill in all the required fields.", {
-        autoClose: 3000,
-      });
-    }
-  } else {
-    toast.error("Please Login to book a facility", {
-      autoClose: 3000,
-    });
-  }
-};
+    };
 
-if (isLoading) {
-  return (
-    <div className="loader-container">
-      <div className="loader" />
-      <div className="loading-text">Submitting...</div>
-    </div>
-  );
-}
+    checkAuth();
+    const handleStorageChange = () => checkAuth();
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  const handleSubmit = async () => {
+    const model = selectedBrand + " " + modelInput;
+
+    if (isLoggedIn) {
+      if (
+        model &&
+        pickupDate &&
+        pickupTime &&
+        fullname &&
+        preferredContactNumber &&
+        address &&
+        deviceCondition &&
+        declarationChecked &&
+        email &&
+        userId
+      ) {
+        let imageUrl = "";
+        if (deviceImage) {
+          const formData = new FormData();
+          formData.append("file", deviceImage);
+          try {
+            const uploadResponse = await fetch("/api/uploadImage", {
+              method: "POST",
+              body: formData,
+            });
+            const uploadData = await uploadResponse.json();
+            if (uploadData.success) {
+              imageUrl = uploadData.url;
+            } else {
+              toast.error("Image upload failed");
+            }
+          } catch (error) {
+            console.error("Image upload error:", error);
+            toast.error("Image upload error");
+          }
+        }
+
+        const newBooking: BookingData = {
+          userId: userId,
+          userEmail: email,
+          recycleItem: model,
+          pickupDate,
+          pickupTime,
+          fullName: fullname,
+          category: "accessories",
+          address,
+          phone: Number(preferredContactNumber),
+          location: location,
+          deviceCondition,
+          accessories: accessories.length > 0 ? accessories : undefined,
+          deviceImageUrl: imageUrl,
+          preferredContactNumber,
+          alternateContactNumber,
+          specialInstructions,
+          declarationChecked,
+          status: "pending",
+          receiverEmail: "",
+          receiverPhone: "",
+          receiverName: "",
+          model: model,
+        };
+
+        setBookingData([...bookingData, newBooking]);
+        setIsLoading(true);
+
+        try {
+          const response = await fetch("/api/recyclingRequests", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-user-id": userId,
+              "x-user-role": userRole,
+            },
+            body: JSON.stringify(newBooking),
+          });
+
+          const responseData = await response.json();
+
+          if (response.ok) {
+            toast.success("Submitted successfully!", { autoClose: 3000 });
+            setSelectedBrand("");
+            setModelInput("");
+            setPickupDate("");
+            setPickupTime("");
+            setAddress("");
+            setDeviceCondition("");
+            setAccessories([]);
+            setDeviceImage(null);
+            setPreferredContactNumber("");
+            setAlternateContactNumber("");
+            setSpecialInstructions("");
+            setDeclarationChecked(false);
+            router.push("/my-requests");
+          } else {
+            toast.error("Error: " + (responseData.error || "Failed to submit data"), {
+              autoClose: 5000,
+            });
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          toast.error("Error submitting data.", { autoClose: 3000 });
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        const missingFields = [];
+        if (!model) missingFields.push("brand and model");
+        if (!pickupDate) missingFields.push("pickup date");
+        if (!pickupTime) missingFields.push("pickup time");
+        if (!fullname) missingFields.push("full name");
+        if (!preferredContactNumber) missingFields.push("preferred contact number");
+        if (!address) missingFields.push("address");
+        if (!deviceCondition) missingFields.push("device condition");
+        if (!declarationChecked) missingFields.push("declaration confirmation");
+        if (!email) missingFields.push("email");
+        if (!userId) missingFields.push("user ID");
+
+        toast.error("Please fill in: " + missingFields.join(", "), { autoClose: 5000 });
+      }
+    } else {
+      router.push("/sign-in?message=signin to recycle");
+      toast.error("Please Login to book a facility", { autoClose: 3000 });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="loader-container">
+        <div className="loader" />
+        <div className="loading-text">Submitting...</div>
+      </div>
+    );
+  }
+
   const currentDate = new Date().toISOString().split("T")[0];
 
   return (
     <div className="container mx-auto p-8">
       <ToastContainer />
-
-      <h1 className="text-4xl font-bold mb-6 p-6 text-center">
-        Accessories Recycling
-      </h1>
+      <h1 className="text-4xl font-bold mb-6 p-6 text-center">Accessories Recycling Request Form</h1>
       <form
         className="grid grid-cols-1 md:grid-cols-2 mx-8 md:mx-0 gap-4 justify-center"
         onSubmit={(e) => {
@@ -228,159 +315,165 @@ if (isLoading) {
           handleSubmit();
         }}
       >
+        {/* Device Details Section */}
+        <div className="md:col-span-2">
+          <h2 className="text-2xl font-medium mb-4 text-gray-600">Device Details:</h2>
+        </div>
+
         <div className="mb-4">
-          <label
-            htmlFor="brand"
-            className="block text-2xl font-medium text-gray-600"
-          >
-            Select Category:
+          <label htmlFor="brand" className="block text-2xl font-medium text-gray-600">
+            Brand
           </label>
           <select
             id="brand"
+            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
             value={selectedBrand}
             onChange={handleBrandChange}
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
+            required
           >
-            <option value="">Select Category</option>
+            <option value="">Select Brand</option>
             {brands.map((brand) => (
-              <option key={brand.category} value={brand.category}>
-                {brand.category}
+              <option key={brand.brand} value={brand.brand}>
+                {brand.brand}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="model"
-            className="block text-2xl font-medium text-gray-600"
-          >
-            Select Items:
-          </label>
-          <select
-            id="model"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
-          >
-            <option value="">Select Items</option>
-            {models.map((model) => (
-              <option key={model} value={model}>
-                {model}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="recycleItemPrice"
-            className="block text-2xl font-medium text-gray-600"
-          >
-            Recycle Item Price:
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="model">
+            Accessories Type
           </label>
           <input
-            type="number"
-            id="recycleItemPrice"
-            value={recycleItemPrice}
-            onChange={(e) => setRecycleItemPrice(Number(e.target.value))}
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
+            type="text"
+            id="model"
+            className="w-full p-2 border rounded bg-white"
+            value={modelInput}
+            onChange={(e) => setModelInput(e.target.value)}
+            placeholder="ex:Earphone,charger,speaker,etc"
+            required
           />
         </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="pickupDate"
-            className="block text-2xl font-medium text-gray-600"
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="deviceCondition">
+            Device Condition
+          </label>
+          <select
+            id="deviceCondition"
+            className="w-full p-2 border rounded bg-white"
+            value={deviceCondition}
+            onChange={(e) => setDeviceCondition(e.target.value)}
+            required
           >
-            Pickup Date:
+            <option value="">Select Condition</option>
+            <option value="Like New">Like New</option>
+            <option value="Working but damaged">Working but damaged</option>
+            <option value="Not working">Not working</option>
+          </select>
+        </div>
+
+
+        {/* Pickup & Contact Details Section */}
+        <div className="md:col-span-2">
+          <h2 className="text-2xl font-semibold mb-4">Pickup & Contact Details:</h2>
+        </div>
+
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="pickupDate">
+            Pickup Date
           </label>
           <input
             type="date"
             id="pickupDate"
-            value={pickupDate}
+            className="w-full p-2 border rounded bg-white"
             min={currentDate}
+            value={pickupDate}
             onChange={(e) => setPickupDate(e.target.value)}
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
+            required
           />
         </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="pickupTime"
-            className="block text-2xl font-medium text-gray-600"
-          >
-            Pickup Time:
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="pickupTime">
+            Pickup Time
           </label>
           <input
             type="time"
             id="pickupTime"
+            className="w-full p-2 border rounded bg-white"
             value={pickupTime}
-
             onChange={(e) => setPickupTime(e.target.value)}
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
+            required
           />
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="address"
-            className="block text-2xl font-medium text-gray-600"
-          >
-            Location:
-          </label>
-          <input
-            type="text"
-            id="address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="phone"
-            className="block text-2xl font-medium text-gray-600"
-          >
-            Phone:
+          <label className="block text-gray-700 mb-2" htmlFor="preferredContactNumber">
+            Preferred Contact Number
           </label>
           <input
             type="tel"
-            id="phone"
-            value={phone ?? ""}
-            readOnly
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
+            id="preferredContactNumber"
+            className="w-full p-2 border rounded bg-white"
+            value={preferredContactNumber}
+            onChange={(e) => setPreferredContactNumber(e.target.value)}
+            required
           />
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="facility"
-            className="block text-2xl font-medium text-gray-600"
-          >
-            Select Facility:
+          <label className="block text-gray-700 mb-2" htmlFor="alternateContactNumber">
+            Alternate Contact Number (Optional)
           </label>
-          <select
-            id="facility"
-            value={selectedFacility}
-            onChange={(e) => setSelectedFacility(e.target.value)}
-            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
-          >
-            <option value="">Select Facility</option>
-            {facility.map((facility) => (
-              <option key={facility.name} value={facility.name}>
-                {facility.name}
-              </option>
-            ))}
-          </select>
+          <input
+            type="tel"
+            id="alternateContactNumber"
+            className="w-full p-2 border rounded bg-white"
+            value={alternateContactNumber}
+            onChange={(e) => setAlternateContactNumber(e.target.value)}
+          />
         </div>
-        <div className="mb-4 md:col-span-2">
+
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="address">
+            Pickup Address
+          </label>
+          <textarea
+            id="address"
+            className="w-full p-2 border rounded mb-2 bg-white"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            required
+          />
+          {location && (
+            <div className="mt-2 text-sm text-green-600">
+              Location captured: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+            </div>
+          )}
+        </div>
+
+        {/* Declaration Section */}
+        <div className="md:col-span-2 mb-4" style={{ height: '1cm' }}>
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              checked={declarationChecked}
+              onChange={(e) => setDeclarationChecked(e.target.checked)}
+              required
+              className="mr-2"
+            />
+            I confirm that this device is owned by me and I have the right to recycle it.
+          </label>
+        </div>
+
+        {/* Submit Button */}
+        <div className="md:col-span-2 flex justify-center">
           <button
             type="submit"
-            className="bg-emerald-700 text-xl text-white px-6 py-3 rounded-md w-full"
+            className="bg-green-600 text-white py-2 px-6 rounded hover:bg-green-700 transition"
           >
-            Submit
+            Submit Recycling Request
           </button>
         </div>
       </form>
