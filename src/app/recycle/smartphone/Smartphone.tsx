@@ -365,16 +365,16 @@ const Smartphone: React.FC = () => {
       >
         {/* Device Details Section */}
         <div className="md:col-span-2">
-          <h2 className="text-2xl font-semibold mb-4">Device Details:</h2>
+          <h2 className="text-2xl font-medium mb-4 text-gray-600">Device Details:</h2>
         </div>
 
-        <div className="mb-4" style={{ height: '1cm' }}>
-          <label className="block text-gray-700 mb-2" htmlFor="brand">
+        <div className="mb-4">
+          <label htmlFor="brand" className="block text-2xl font-medium text-gray-600">
             Brand
           </label>
           <select
             id="brand"
-            className="w-full p-2 border rounded bg-white"
+            className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
             value={selectedBrand}
             onChange={handleBrandChange}
             required
@@ -476,32 +476,6 @@ const Smartphone: React.FC = () => {
           />
         </div>
 
-        <div className="mb-4" style={{ height: '1cm' }}>
-          <label className="block text-gray-700 mb-2" htmlFor="address">
-            Pickup Address
-          </label>
-          <textarea
-            id="address"
-          className="w-full p-2 border rounded mb-2 bg-white"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-          />
-          <button
-            type="button"
-            onClick={getCurrentLocation}
-            disabled={isGettingLocation}
-            className="bg-blue-500 text-white py-1 px-3 rounded text-sm hover:bg-blue-600 transition"
-          >
-            {isGettingLocation ? "Getting Location..." : "Use Current Location"}
-          </button>
-          {location && (
-            <div className="mt-2 text-sm text-green-600">
-              Location captured: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-            </div>
-          )}
-        </div>
-
         <div className="mb-4">
           <label className="block text-gray-700 mb-2" htmlFor="preferredContactNumber">
             Preferred Contact Number
@@ -527,6 +501,24 @@ const Smartphone: React.FC = () => {
             value={alternateContactNumber}
             onChange={(e) => setAlternateContactNumber(e.target.value)}
           />
+        </div>
+
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="address">
+            Pickup Address
+          </label>
+          <textarea
+            id="address"
+          className="w-full p-2 border rounded mb-2 bg-white"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            required
+          />
+          {location && (
+            <div className="mt-2 text-sm text-green-600">
+              Location captured: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+            </div>
+          )}
         </div>
 
         <div className="mb-4">
