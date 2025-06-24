@@ -68,7 +68,7 @@ const Header = () => {
 
   const [isNavbarActive, setIsNavbarActive] = useState(false);
   const [isHeaderActive, setIsHeaderActive] = useState(false);
-  const [locations, setLocation] = useState("");
+  // const [locations, setLocation] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -230,15 +230,15 @@ const Header = () => {
                 <NavItem label="Recycle" isAdmin={false} />
                 <NavItem label="My Requests" isAdmin={false} />
                 <NavItem label="Contactus" isAdmin={false} />
-                <NavItem label="Rules" isAdmin={false} />
+                {/* <NavItem label="Rules" isAdmin={false} /> */}
               </>
             )}
           </ul>
         </nav>
 
         <h1 className="font-montserrat font-bold text-xl ml-12 md:ml-4 md:text-2xl text-emerald-600 flex items-center gap-[1vh]">
-          <IonIcon icon={location} aria-hidden="true" role="img"></IonIcon>
-          {locations || "Loading..."}
+          {/* <IonIcon icon={location} aria-hidden="true" role="img"></IonIcon>
+          {locations || "Loading..."} */}
         </h1>
 
         {user ? (
@@ -254,7 +254,16 @@ const Header = () => {
             </button>
             {isNotificationOpen && (
               <div className="absolute top-12 right-0 bg-white shadow-lg rounded-md w-80 max-h-96 overflow-auto z-50 p-4">
-                <h3 className="font-semibold mb-2">Notifications</h3>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold">Notifications</h3>
+                  <button
+                    aria-label="Close notifications"
+                    onClick={handleToggleNotification}
+                    className="text-gray-600 hover:text-gray-900 font-bold text-xl leading-none"
+                  >
+                    &times;
+                  </button>
+                </div>
                 {notifications.length === 0 ? (
                   <p className="text-gray-500">No notifications</p>
                 ) : (
