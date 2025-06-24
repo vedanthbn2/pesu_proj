@@ -232,20 +232,21 @@ interface RecyclingRequestDetail {
       if (result.success) {
         alert("Pickup request approved and assigned to receiver: " + assignedReceiver.name);
 
-        try {
-          await fetch("/api/notifications", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: request?.userId,
-              message:
-                "Your request has been approved. Our partner will reach out to you as soon as possible.",
-              sender: "admin"
-            }),
-          });
-        } catch (error) {
-          console.error("Error creating approval notification:", error);
-        }
+        // Notification sending removed as per user request to not show this message
+        // try {
+        //   await fetch("/api/notifications", {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({
+        //       userId: request?.userId,
+        //       message:
+        //         "Your request has been approved. Our partner will reach out to you as soon as possible.",
+        //       sender: "admin"
+        //     }),
+        //   });
+        // } catch (error) {
+        //   console.error("Error creating approval notification:", error);
+        // }
 
         // Update assignedReceiver state to selected receiver object to reflect immediately in UI
         setRequest((prev: RecyclingRequestDetail | null) =>

@@ -68,6 +68,15 @@ const Accessories: React.FC = () => {
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [declarationChecked, setDeclarationChecked] = useState(false);
 
+  // Add device image upload handler
+  const handleDeviceImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setDeviceImage(e.target.files[0]);
+    } else {
+      setDeviceImage(null);
+    }
+  };
+
   const getCurrentLocation = () => {
     setIsGettingLocation(true);
     if (navigator.geolocation) {
@@ -371,6 +380,19 @@ const Accessories: React.FC = () => {
             <option value="Working but damaged">Working but damaged</option>
             <option value="Not working">Not working</option>
           </select>
+        </div>
+
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="deviceImage">
+            Upload Device Image (Optional)
+          </label>
+          <input
+            type="file"
+            id="deviceImage"
+            accept="image/*"
+            onChange={handleDeviceImageChange}
+            className="w-full bg-white"
+          />
         </div>
 
 
