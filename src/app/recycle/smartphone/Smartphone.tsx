@@ -162,6 +162,10 @@ const Smartphone: React.FC = () => {
           brand: "Motorola",
           models: ["Moto G60", "Moto G40 Fusion", "Moto G30", "Moto G9 Power", "Moto E7 Power"],
         },
+        {
+          brand: "Other",
+          models: ["Moto G60", "Moto G40 Fusion", "Moto G30", "Moto G9 Power", "Moto E7 Power"],
+        },
       ];
 
       setBrands(brandsData);

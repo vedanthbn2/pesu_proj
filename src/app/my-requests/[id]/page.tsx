@@ -171,14 +171,14 @@ const MyRequestDetailPage: React.FC = () => {
             "No image uploaded"
           )}
         </div>
-        <div>
+        {/* <div>
           <span className="font-semibold">E Waste Image:</span>{" "}
           {request.eWasteImageUrl ? (
             <Image src={fixImageSrc(request.eWasteImageUrl)} alt="E Waste" className="max-w-xs" width={400} height={300} />
           ) : (
             "No e waste image uploaded"
           )}
-        </div>
+        </div> */}
         <div>
           <span className="font-semibold">Pickup Date:</span> {request.pickupDate}
         </div>

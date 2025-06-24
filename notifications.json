@@ -142,5 +142,21 @@
     "message": "Your request has been approved. Our partner will reach out to you as soon as possible.",
     "read": false,
     "createdAt": "2025-06-22T09:07:21.501Z"
+  },
+  {
+    "id": "1750609415173",
+    "userId": "682b76a3176fc73b2c6167f7",
+    "receiverId": null,
+    "message": "Your request has been approved. Our partner will reach out to you as soon as possible.",
+    "read": false,
+    "createdAt": "2025-06-22T16:23:35.173Z"
+  },
+  {
+    "id": "1750710765866",
+    "userId": "682b76a3176fc73b2c6167f7",
+    "receiverId": null,
+    "message": "Your request has been approved. Our partner will reach out to you as soon as possible.",
+    "read": false,
+    "createdAt": "2025-06-23T20:32:45.866Z"
   }
 ]

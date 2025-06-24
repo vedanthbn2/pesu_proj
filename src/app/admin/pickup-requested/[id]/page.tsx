@@ -52,7 +52,7 @@ interface RecyclingRequestDetail {
   alternateContactNumber?: string;
   specialInstructions?: string;
   declarationChecked?: boolean;
-  status: string;
+  status: "pending" | "approved" | "received" | "received by recycler" | "collected";
   createdAt: string;
   deviceImageUrl?: string;
   category?: string;
@@ -65,14 +65,28 @@ interface RecyclingRequestDetail {
   receiverEmail?: string;
 }
 
-const PickupRequestDetailPage: React.FC = () => {
-  const { id } = useParams();
-  const router = useRouter();
-  const [request, setRequest] = useState<RecyclingRequestDetail | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [receivers, setReceivers] = useState<Receiver[]>([]);
-  const [selectedReceiverId, setSelectedReceiverId] = useState<string>("");
+  const PickupRequestDetailPage: React.FC = () => {
+    const { id } = useParams();
+    const router = useRouter();
+    const [request, setRequest] = useState<RecyclingRequestDetail | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [receivers, setReceivers] = useState<Receiver[]>([]);
+    const [selectedReceiverId, setSelectedReceiverId] = useState<string>("");
+
+    const [mounted, setMounted] = useState(false);
+
+    // Helper function to check if status is "received" ignoring case and whitespace
+    const isStatusReceived = (status?: string) => {
+      console.log("Current status value:", status);
+      return status?.trim().toLowerCase() === "received";
+    };
+
+    console.log("Current request object:", request);
+
+    React.useEffect(() => {
+      setMounted(true);
+    }, []);
 
   useEffect(() => {
     setRequest(null);
@@ -226,6 +240,7 @@ const PickupRequestDetailPage: React.FC = () => {
               userId: request?.userId,
               message:
                 "Your request has been approved. Our partner will reach out to you as soon as possible.",
+              sender: "admin"
             }),
           });
         } catch (error) {
@@ -278,6 +293,8 @@ const PickupRequestDetailPage: React.FC = () => {
     // Remove messages for pending and approved in admin view as per user request
     return null;
   };
+
+  console.log("Render status:", request?.status);
 
   return (
     <div className="max-w-6xl mx-auto p-8 bg-white rounded-lg shadow-lg">
@@ -365,15 +382,15 @@ const PickupRequestDetailPage: React.FC = () => {
         )}
         {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
         {/* @ts-ignore */}
-        {request.status !== "pending" && (
+        {/* {request.status !== "pending" && (
           <div>
             <span className="font-semibold">Collection Notes:</span>{" "}
             {request.collectionNotes !== undefined && request.collectionNotes !== null && request.collectionNotes.trim() !== "" ? request.collectionNotes : "No notes provided."}
           </div>
-        )}
+        )} */}
         {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
         {/* @ts-ignore */}
-        {request.status !== "pending" && (
+        {/* {request.status !== "pending" && (
           <div>
             <span className="font-semibold">Collection Proof:</span>{" "}
             {request.collectionProof !== undefined && request.collectionProof !== null && request.collectionProof.trim() !== "" ? (
@@ -388,7 +405,7 @@ const PickupRequestDetailPage: React.FC = () => {
               "No proof uploaded"
             )}
           </div>
-        )}
+        )} */}
         {(request.status === "received" || request.status === "collected") && request.receivedBy && (
           <div>
             <span className="font-semibold">Received By:</span>{" "}
@@ -448,24 +465,52 @@ const PickupRequestDetailPage: React.FC = () => {
               Approve Pickup
             </button>
           ) : null}
-          {request.status === "received" && (
+          {mounted && isStatusReceived(request?.status) && (
             <>
-              <div className="mb-4">
-                <strong>Collection Notes:</strong>
-                <p>{request.collectionNotes || "None"}</p>
-              </div>
-              <div className="mb-4">
-                <strong>Collection Proof:</strong>
-                {request.collectionProof ? (
-                  <img
-                    src={request.collectionProof}
-                    alt="Collection Proof"
-                    className="max-w-xs max-h-48"
-                  />
-                ) : (
-                  <p>No proof uploaded</p>
-                )}
-              </div>
+              <div>DEBUG: Button should render here</div>
+              <button
+                className="bg-blue-600 text-white py-2 px-4 rounded mr-4"
+                onClick={async () => {
+                  if (!confirm("Confirm marking as received by recycler?")) {
+                    return;
+                  }
+                  try {
+                    const userJSON = localStorage.getItem("user");
+                    const userLocal = userJSON ? JSON.parse(userJSON) : null;
+                    const userIdStr = userLocal ? String(userLocal.id) : "";
+                    const userRoleStr = userLocal && userLocal.role ? String(userLocal.role) : "user";
+
+                    const response = await fetch("/api/recyclingRequests", {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "x-user-id": userIdStr,
+                        "x-user-role": userRoleStr,
+                      },
+                      body: JSON.stringify({
+                        id: request.id,
+                        updates: { status: "received by recycler" },
+                      }),
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                      alert("Status updated to 'received by recycler'.");
+
+                      // Update local state to reflect new status
+                      setRequest((prev) =>
+                        prev ? { ...prev, status: "received by recycler" } : prev
+                      );
+                    } else {
+                      alert("Failed to update status: " + result.error);
+                    }
+                  } catch (error) {
+                    alert("Error updating status: " + error);
+                  }
+                }}
+              >
+                Received by Recycler
+              </button>
             </>
           )}
           <button
@@ -493,6 +538,51 @@ const PickupRequestDetailPage: React.FC = () => {
               ? `${request.assignedReceiver.name} (${request.assignedReceiver.email})`
               : request.assignedReceiver?.name || "N/A"}
           </div>
+          {request && request.status === "received" && (
+            <button
+              className="bg-blue-600 text-white py-2 px-4 rounded mr-4"
+              onClick={async () => {
+                if (!confirm("Confirm marking as received by recycler?")) {
+                  return;
+                }
+                try {
+                  const userJSON = localStorage.getItem("user");
+                  const userLocal = userJSON ? JSON.parse(userJSON) : null;
+                  const userIdStr = userLocal ? String(userLocal.id) : "";
+                  const userRoleStr = userLocal && userLocal.role ? String(userLocal.role) : "user";
+
+                  const response = await fetch("/api/recyclingRequests", {
+                    method: "PATCH",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "x-user-id": userIdStr,
+                      "x-user-role": userRoleStr,
+                    },
+                    body: JSON.stringify({
+                      id: request.id,
+                      updates: { status: "received by recycler" },
+                    }),
+                  });
+
+                  const result = await response.json();
+                  if (result.success) {
+                    alert("Status updated to 'received by recycler'.");
+
+                    // Update local state to reflect new status
+                    setRequest((prev) =>
+                      prev ? { ...prev, status: "received by recycler" } : prev
+                    );
+                  } else {
+                    alert("Failed to update status: " + result.error);
+                  }
+                } catch (error) {
+                  alert("Error updating status: " + error);
+                }
+              }}
+            >
+              Received by Recycler
+            </button>
+          )}
           <button
             className="bg-gray-600 text-white py-2 px-4 rounded ml-4"
             onClick={() => router.back()}
