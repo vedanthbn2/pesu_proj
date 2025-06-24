@@ -35,7 +35,6 @@ interface BookingData {
   phone: number;
   location?: Location;
   deviceCondition?: string;
-  accessories?: string[];
   deviceImageUrl?: string;
   preferredContactNumber?: string;
   alternateContactNumber?: string;
@@ -61,12 +60,20 @@ const Television: React.FC = () => {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const [deviceCondition, setDeviceCondition] = useState("");
-  const [accessories, setAccessories] = useState<string[]>([]);
   const [deviceImage, setDeviceImage] = useState<File | null>(null);
   const [preferredContactNumber, setPreferredContactNumber] = useState("");
   const [alternateContactNumber, setAlternateContactNumber] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [declarationChecked, setDeclarationChecked] = useState(false);
+
+  // Add device image upload handler
+  const handleDeviceImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setDeviceImage(e.target.files[0]);
+    } else {
+      setDeviceImage(null);
+    }
+  };
 
   const getCurrentLocation = () => {
     setIsGettingLocation(true);
@@ -96,14 +103,7 @@ const Television: React.FC = () => {
     setSelectedBrand(brand);
   };
 
-  const handleAccessoryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = event.target;
-    if (checked) {
-      setAccessories((prev) => [...prev, value]);
-    } else {
-      setAccessories((prev) => prev.filter((acc) => acc !== value));
-    }
-  };
+  
 
   useEffect(() => {
     const fetchBrandsAndModels = () => {
@@ -217,7 +217,6 @@ const Television: React.FC = () => {
           phone: Number(preferredContactNumber),
           location: location,
           deviceCondition,
-          accessories: accessories.length > 0 ? accessories : undefined,
           deviceImageUrl: imageUrl,
           preferredContactNumber,
           alternateContactNumber,
@@ -373,51 +372,19 @@ const Television: React.FC = () => {
           </select>
         </div>
 
-        {/* Accessories Included section */}
-        <div className="mb-4 md:col-span-2">
-          <label className="block text-gray-700 mb-2">Accessories Included:</label>
-          <div className="flex flex-wrap gap-4">
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                value="Charger"
-                checked={accessories.includes("Charger")}
-                onChange={handleAccessoryChange}
-                className="mr-2"
-              />
-              Charger
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                value="Earphones"
-                checked={accessories.includes("Earphones")}
-                onChange={handleAccessoryChange}
-                className="mr-2"
-              />
-              Earphones
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                value="USB Cable"
-                checked={accessories.includes("USB Cable")}
-                onChange={handleAccessoryChange}
-                className="mr-2"
-              />
-              USB Cable
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                value="Adapter"
-                checked={accessories.includes("Adapter")}
-                onChange={handleAccessoryChange}
-                className="mr-2"
-              />
-              Adapter
-            </label>
-          </div>
+        
+
+        <div className="mb-4" style={{ height: '1cm' }}>
+          <label className="block text-gray-700 mb-2" htmlFor="deviceImage">
+            Upload Device Image (Optional)
+          </label>
+          <input
+            type="file"
+            id="deviceImage"
+            accept="image/*"
+            onChange={handleDeviceImageChange}
+            className="w-full bg-white"
+          />
         </div>
 
         {/* Pickup & Contact Details Section */}
