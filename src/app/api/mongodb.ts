@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = 'mongodb://localhost:27017/ewasteDB';
+const MONGODB_URI = 'mongodb+srv://myuser:<12345>@cluster0.adydiz3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 if (!MONGODB_URI) {
   throw new Error(
